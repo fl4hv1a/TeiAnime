@@ -1,8 +1,13 @@
 
+% "dynamic" avisa ao interpretador que esses fatos podem ser alterados, adicionados ou removidos em tempo de execução
+:- dynamic assistiu/2. % assitiu(anime, avaliacao) -> Ex: assistiu('Sailor Moon', 'amou [3]')
 
+/*
+    'ensure_loaded' funciona como um 'import' ou 'include'.
+    Ele carrega todo o conteúdo de 'X.pl' para a memória RAM.
+    Se 'X.pl' não estiver na mesma pasta, o programa falha aqui.
+ */
 :- ensure_loaded('handlers.pl').
-:- ensure_loaded('ui.pl').
-:- ensure_loaded('data.pl').
 
 iniciar :-
     write('----------------------------------------------------------'), nl,
@@ -13,20 +18,31 @@ iniciar :-
 .
 
 menu:-
-    write('-------- MENU PRINCIPAL --------'), nl,
+    repeat,
+    nl,
+    write('-------- MENU PRINCIPAL --------'), nl, nl,
     write('[1] Criar perfil'), nl,
-    write('[2] Meus animes'), nl,
-    write('[3] Adicionar anime assitido'), nl,
-    write('[4] Sugestão de anime'), nl,
-    write('[5] Sugestão aleatória'), nl,
-    write('[6] Sugerir animes populares'), nl,
-    write('[7] Sugerir animes da season atual'), nl,
-    write('[8] Sugerir animes da próxima season'), nl,
-    write('[9] Salvar e sair'), nl,
+    write('[2] Carregar perfil'), nl,
+    write('[3] Excluir perfil'), nl,
+    write('[4] Meus animes'), nl,
+    write('[5] Adicionar anime assitido'), nl,
+    write('[6] Sugestão de anime'), nl,
+    write('[7] Sugestão aleatória'), nl,
+    write('[8] Sugerir animes populares'), nl,
+    write('[9] Sugerir animes da season atual'), nl,
+    write('[10] Sugerir animes da próxima season'), nl,
+    write('[0] Salvar e sair'), nl,
 
     write('O que deseja fazer agora?'), nl,
-    read(Opcao),
-    % tratar_opcao(Opcao),
+
+    % Lê a linha inteira como string e converte para número para evitar resíduos no buffer
+    read_line_to_string(user_input, OpcaoStr),
+    (   number_string(Opcao, OpcaoStr)
+    ->  true
+    ;   Opcao = -1 % Valor inválido caso o usuário aperte Enter sem digitar nada
+    ),
+    
+    tratar_opcao(Opcao),
 
     Opcao = 0,      % Condição de parada: Se Opcao for 0, a linha seguinte (Cut) é executada.
                     % Se Opcao não for 0, a linha 'Opcao = 0' falha e o Prolog faz
