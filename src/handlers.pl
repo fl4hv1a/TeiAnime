@@ -53,9 +53,28 @@ tratar_opcao(1) :-
     verificar_arquivo_existente(NomeAtom, NomeArquivo, DirArquivo).
 
 
-
 % Opção 2
-% Opção 3
+
+
+% Opção 3: Excluir perfil
+tratar_opcao(3):- 
+    write('Qual perfil você gostaria de exluir?'), nl,
+    read_line_to_string(user_input, NomeString),
+    atom_string(NomeAtom, NomeString),
+    
+    % Encontra o caminho para o arquivo do perfil
+    atom_concat(NomeAtom, '.pl', NomeArquivo),
+    atom_concat('../profiles/', NomeArquivo, DirArquivo),
+
+    % Verifica se o perfil existe
+    (
+        exists_file(DirArquivo) -> delete_file(DirArquivo),
+        format('Perfil "~w" apagado com sucesso! ~n', [NomeAtom]) ;
+        format('Aviso: O perfil "~w" não foi encontrado. ~n', [NomeAtom]) 
+    )
+.
+
+
 % Opção 4
 % Opção 5
 % Opção 6
