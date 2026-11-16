@@ -1,3 +1,5 @@
+:- dynamic caminho_perfil_ativo/1.
+
 
 % Cria um arquivo .pl vazio identificado pelo nome inserido pelo usuário
 criar_perfil(NomeAtom) :-
@@ -24,9 +26,15 @@ criar_perfil(NomeAtom) :-
     % Caso ainda não haja, chama o predicado de criação de perfil
 verificar_arquivo_existente(NomeAtom, NomeArquivo, DirArquivo) :-
     (   exists_file(DirArquivo)
-    ->  format('O arquivo "~w" já existe!~n', [NomeArquivo])
+    ->  format('o arquivo "~w" já existe!~n', [NomeArquivo])
     ;   criar_perfil(NomeAtom)
     )   
+.
+
+salvar_perfil_ativo(CaminhoCompleto):-
+    % Limpa o anterior e salva o átomo na base dinâmica
+    retractall(caminho_perfil_ativo(_)),
+    assertz(caminho_perfil_ativo(CaminhoCompleto))
 .
 
 % _______________________________________________________________________________________________________________________
@@ -53,7 +61,55 @@ tratar_opcao(1) :-
     verificar_arquivo_existente(NomeAtom, NomeArquivo, DirArquivo).
 
 
-% Opção 2
+% Opção 2: Carregar perfil
+tratar_opcao(2) :-
+    write('-------- CARREGAR PERFIL --------'), nl,
+    
+    (   exists_directory('../profiles')
+    ->  directory_files('../profiles', TodosArquivos),
+        include(eh_arquivo_pl, TodosArquivos, Perfis),
+        (   Perfis == []
+        ->  write('Nenhum perfil encontrado.'), nl
+        ;   listar_perfis(Perfis, 1),
+            nl,
+            write('Digite o número do perfil que deseja carregar: '), nl,
+            read_line_to_string(user_input, EscolhaStr),
+            (   number_string(Indice, EscolhaStr),
+                nth1(Indice, Perfis, NomeArquivo)
+            ->  atom_concat('../profiles/', NomeArquivo, CaminhoCompleto),
+                
+                % Limpa os dados e o perfil ativo anterior da memória RAM
+                retractall(assistiu(_, _)),
+                retractall(caminho_perfil_ativo(_)),
+                retractall(perfil_ativo(_)),
+                
+                % Carrega os fatos do arquivo escolhido
+                consult(CaminhoCompleto),
+                
+                
+                % Extrai o nome do perfil (removendo a extensão .pl) e define como ativo
+                file_name_extension(NomePerfil, '.pl', NomeArquivo),
+                assertz(perfil_ativo(NomePerfil)),
+                
+                format('Perfil "~w" carregado com sucesso!~n', [NomePerfil]),
+                salvar_perfil_ativo(CaminhoCompleto)
+            ;   write('Opção inválida.'), nl
+            )
+        )
+    ;   write('Diretório de perfis não encontrado.'), nl
+    ),
+    !,
+    nl.
+
+% Auxiliares necessários
+eh_arquivo_pl(Arquivo) :-
+    atom_concat(_, '.pl', Arquivo).
+
+listar_perfis([], _).
+listar_perfis([H|T], N) :-
+    format('[~w] ~w~n', [N, H]),
+    N1 is N + 1,
+    listar_perfis(T, N1).
 
 
 % Opção 3: Excluir perfil
@@ -75,9 +131,67 @@ tratar_opcao(3):-
 .
 
 
-% Opção 4
-% Opção 5
-% Opção 6
-% Opção 7
-% Opção 8
-% Opção 9
+% Opção 4: Meus animes
+
+
+salvar_anime(Titulo, Avaliacao) :-
+    % 1. Recupera o caminho salvo na base dinâmica
+    (   caminho_perfil_ativo(CaminhoArquivo)
+    ->  % 2. Abre o arquivo no modo 'append' e escreve o formato desejado (ex: meu_fato(Arg1, Arg2))
+        setup_call_cleanup(
+            open(CaminhoArquivo, append, Stream),
+            format(Stream, 'assistiu(~q, ~q).~n', [Titulo, Avaliacao]),
+            close(Stream)
+        ),
+        format('Fato salvo com sucesso no arquivo do perfil!~n')
+    ;   write('Erro: Nenhum perfil está carregado no momento.'), nl
+    ).
+
+
+/*
+salvar_anime(Titulo, Avaliacao):-
+    setup_call_cleanup(
+    open(caminho_perfil_ativo, append, Stream),
+    format(Stream, 'assistiu(~q, ~q).~n', [Titulo, Avaliacao]),
+    close(Stream)
+    )
+.
+*/
+
+% Opção 5: Adicionar anime assitido
+tratar_opcao(5):-
+    % Lê o título do anime que o usuário deseja adicionar ao seu perfil
+    write('Qual o título do anime: '),
+    read_line_to_string(user_input, Titulo),
+    % atom_string(NomeAnime, String),
+
+    /*
+    -> Ao fazer a integração com a API do Anilist, o sistema deve primeiramente
+    buscar o nome desse anime na base de dados para garantir que o usuário não inseriu
+    um anime inválido ou que ele escreveu o título errado
+        1. Se o anime for válido, prossegue para a avaliação
+        2. Se o anime for inválido, avisa para o usuário e pergunta se ele quer inserir outro anime ou verificar se escreveu corretamente
+    */
+
+    % Pergunta qual é a sua opinião sobre ele, o que é importante para decidir o peso que as características desse anime terão na recomendação de outros animes ao usuário
+    write('O que você achou desse anime? Você amou, gostou, não gostou ou odiou?'),
+    read_line_to_string(user_input, Avaliacao),
+    % atom_string(PesoAtom, String),
+
+    % Armazena o anime no arquivo do perfil como um fato
+    salvar_anime(Titulo, Avaliacao)
+.
+
+% Opção 6: Sugestão de anime
+
+
+% Opção 7: Sugestão aleatória
+
+
+% Opção 8: Sugerir animes populares
+
+
+% Opção 9: Sugerir animes da season atual
+
+
+% Opção 10: Sugerir animes da próxima season
