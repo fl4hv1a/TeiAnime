@@ -1,4 +1,5 @@
 :- dynamic caminho_perfil_ativo/1.
+:- dynamic assistiu/2.
 
 
 % Cria um arquivo .pl vazio identificado pelo nome inserido pelo usuário
@@ -241,19 +242,30 @@ carregar(P, Max) :-
     ; true).
     /* salvar_anime(Titulo, Avaliacao) */
 
+% Permite adicionar avaliações em tempo de execução
 :- dynamic avaliacao/3.
 
 num_avaliacoes(Id, Q) :-
     aggregate_all(count, avaliacao(_, Id, N), Notas),
 
-% Média das notas dadas pelos usuários
-media(Id, Media) :-
+% Junta todas as notas desse anime numa lista
+media(Id, M) :-
     aggregate_all(bag(N), avaliacao(_, Id, N), Notas),
+
+    % Garante que a lista não está vazia
     Notas \= [],
+
+    % Soma as notas, conta quantas são e calcula a média
     sum_list(Notas, S),
     length(Notas, Q),
     Media is S/Q.
-    
+
+% Média alta e um minímo de avaliações
+popular(Id) :-
+    num_avaliacoes(Id, Q), Q >= 3,
+    media(Id, M), M >= 7.
+
+% Ranking de animes mais populares por média, apenas com animes com avaliações suficientes
 populares(K, Top) :-                                                                    
     findall(M-T, 
         (anime(Id, T, _,_), 
@@ -265,8 +277,6 @@ populares(K, Top) :-
     Min is min(K, Tam),
     length(Top, Min),
     append(Top, _, Ordenados).
-
-
 
 % Opção 9: Sugerir animes da season atual
 
