@@ -1,6 +1,9 @@
 
 % "dynamic" avisa ao interpretador que esses fatos podem ser alterados, adicionados ou removidos em tempo de execução
-:- dynamic assistiu/2. % assitiu(anime, avaliacao) -> Ex: assistiu('Sailor Moon', 'amou [3]')
+:- dynamic perfil_ativo/1.
+:- dynamic caminho_perfil_ativo/1.
+:- dynamic assistiu/2.
+:- dynamic salvar_anime/2.
 
 /*
     'ensure_loaded' funciona como um 'import' ou 'include'.
@@ -31,7 +34,7 @@ menu:-
     write('[8] Sugerir animes populares'), nl,
     write('[9] Sugerir animes da season atual'), nl,
     write('[10] Sugerir animes da próxima season'), nl,
-    write('[0] Salvar e sair'), nl,
+    write('[0] Sair'), nl,
 
     write('O que deseja fazer agora?'), nl,
 

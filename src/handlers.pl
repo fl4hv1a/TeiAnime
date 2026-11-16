@@ -1,4 +1,5 @@
 :- dynamic caminho_perfil_ativo/1.
+:- dynamic assistiu/2.
 
 
 % Cria um arquivo .pl vazio identificado pelo nome inserido pelo usuário
@@ -132,7 +133,12 @@ tratar_opcao(3):-
 
 
 % Opção 4: Meus animes
+    % Lista os animes assistidos pelo usuário
 
+tratar_opcao(4):-
+    findall(Titulo, assistiu(Titulo, Avaliacao), Animes),
+    write(Animes), nl
+.
 
 salvar_anime(Titulo, Avaliacao) :-
     % 1. Recupera o caminho salvo na base dinâmica
