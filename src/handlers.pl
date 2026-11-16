@@ -189,6 +189,67 @@ tratar_opcao(5):-
 
 
 % Opção 8: Sugerir animes populares
+tratar_opcao(8):- use_module(library(http/http_client)).       % Bibliotecas necessárias para fazer requisições HTTP
+:- use_module(library(http/http_json)).
+:- dynamic anime/4, genero/2.                                  % Esses predicados podem ser alterados
+
+write('----- ANIMES POPULARES -----')
+
+consulta_catalogo("                                            % Consulta GraphQL, que pede animes com id, titulo, genero e ano específico de acordo com cada página, e é ordenado por ID
+    query ($page: Int, $perPage: Int){
+        Page(page: $page, perPage: $perPage){
+            pageInfo {hasNextPage}
+            media(type: ANIME, sort: ID){
+                id
+                title { romaji english }
+                genres
+                seasonYear
+            }
+        }
+    }
+").
+
+buscar_pagina(Pagina, page) :-                                                          % Define o predicado que busca uma página 
+    consulta_catalogo(Q),
+Corpo = _{query: Q, variables: _{page: Pagina, perPage: 10}},                           % Define o corpo da requisição, a consulta (query) e os valores das variáveis (página pedida e 10 itens por página)
+    http_post('https://graphql.anilist.co', json(Corpo), Resp, [json_object(dict)]),    % Envia POST para a API, transformando Corpo em JSON, em resposta se tem em Resp, e logo depois se converte o JSON em dicionário Prolog
+    Page = Resp.data.'Page'.                                                            % Extrai da resposta data -> page
+
+carregar_catalogo(Max) :- carregar(1, Max).                                             % Começa na pag 1 e vai até Max
+
+/* carregar(P, Max) :-
+    P = < Max, !,
+    buscar_pagina(P, Page),
+    forall(member(M, Page.media), salvar_anime(Titulo, Avaliacao)),
+    ( Page.pageInfo.hasNextPage == true
+    -> sleep(1), P1 is P + 1, carregar(P1, Max)
+    ; true).
+*/
+
+:- dynamic avaliacao/3.
+
+num_avaliacoes(Id, Q) :-
+    aggregate_all(count, avaliacao(_, Id, N), Notas),
+
+media(Id, Media) :-
+    aggregate_all(bag(N), avaliacao(_, Id, N), Notas),
+    Notas \= [],
+    sum_list(Notas, S),
+    length(Notas, Q),
+    Media is S/Q.
+    
+/* populares(K, Top) :-
+    findall(M-T, 
+        (anime(Id, T, _,_), 
+        num_avaliacoes(Id, Q), Q >= 3, 
+        media(Id, M)), 
+        Pares),
+    sort(0, @>=, Pares, Ordenados),
+    length(Ordenados, Tam),
+    Min is min(K, Tam),
+    length(Top, Min),
+    append(Top, _, Ordenados).
+*/
 
 
 % Opção 9: Sugerir animes da season atual
