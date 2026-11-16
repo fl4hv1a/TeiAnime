@@ -280,5 +280,22 @@ populares(K, Top) :-
 
 % Opção 9: Sugerir animes da season atual
 
+% Determina a atual temporada para usar de base na busca de recomendações
+season_atual(Season, Ano) :-
+    get_time(Agora),
+    stamp_date_time(Agora, date(Ano, Mes, _, _, _, _, _, _), local),
+    mes_season(Mes, Season).
+
+    mes_season(M, 'INVERNO') :- M =< 3, !.
+    mes_season(M, 'PRIMAVERA') :- M =< 6, !.
+    mes_season(M, 'VERÃO') :- M =< 9, !.
+    mes_season(_, 'OUTONO').
+
+
+:- dynamic season/1, popularidade_ex/2.
+
+/* consulta_season("
+    query ()")
+8*/ 
 
 % Opção 10: Sugerir animes da próxima season
